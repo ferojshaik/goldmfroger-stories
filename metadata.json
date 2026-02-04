@@ -1,0 +1,9 @@
+
+{
+  "name": "GoldMFroger Stories",
+  "description": "A satirical and humorous storytelling platform for real incidents. Real Incidents. Satirical Twists. Maximum Laughs.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
