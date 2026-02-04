@@ -1,9 +1,37 @@
+import crypto from 'crypto';
 import {
   createSignedPayload,
   getSessionCookieOptions,
   serializeCookie,
   setCorsHeaders,
 } from '../lib/session.js';
+
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX = 5;
+const rateLimitMap = new Map(); // per-instance; use Upstash/Vercel KV for global limit
+
+function getClientId(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : req.headers['x-real-ip'];
+  return ip || 'unknown';
+}
+
+function isRateLimited(req) {
+  const id = getClientId(req);
+  const now = Date.now();
+  let entry = rateLimitMap.get(id);
+  if (!entry) {
+    rateLimitMap.set(id, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  if (now >= entry.resetAt) {
+    rateLimitMap.set(id, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count += 1;
+  if (entry.count > RATE_LIMIT_MAX) return true;
+  return false;
+}
 
 function getBody(req) {
   return new Promise((resolve) => {
@@ -18,6 +46,13 @@ function getBody(req) {
     });
     req.on('error', () => resolve({}));
   });
+}
+
+function constantTimeCompare(a, b) {
+  const bufA = crypto.createHash('sha256').update(a, 'utf8').digest();
+  const bufB = crypto.createHash('sha256').update(b, 'utf8').digest();
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
 }
 
 export default async function handler(req, res) {
@@ -40,6 +75,11 @@ export default async function handler(req, res) {
 
     setCorsHeaders(req, res);
 
+    if (isRateLimited(req)) {
+      sendJson(429, { success: false, error: 'Too many attempts. Try again later.' });
+      return;
+    }
+
     const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || '').trim();
     if (!ADMIN_PASSWORD) {
       sendJson(500, {
@@ -55,7 +95,7 @@ export default async function handler(req, res) {
       sendJson(400, { success: false, error: 'Password required.' });
       return;
     }
-    if (submitted !== ADMIN_PASSWORD) {
+    if (!constantTimeCompare(submitted, ADMIN_PASSWORD)) {
       sendJson(401, { success: false, error: 'Invalid password.' });
       return;
     }

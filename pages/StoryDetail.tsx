@@ -110,10 +110,14 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
 
           <div className="prose prose-invert prose-zinc max-w-none">
             {story.body ? (
-              <div 
-                className="text-zinc-300 text-xl leading-relaxed whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{ __html: story.body.replace(/\n/g, '<br/>') }} 
-              />
+              <div className="text-zinc-300 text-xl leading-relaxed whitespace-pre-wrap">
+                {story.body.split('\n').map((line, i, lines) => (
+                  <React.Fragment key={i}>
+                    {line}
+                    {i < lines.length - 1 && <br />}
+                  </React.Fragment>
+                ))}
+              </div>
             ) : (
               <p>Content for this story is coming soon. Stay tuned!</p>
             )}

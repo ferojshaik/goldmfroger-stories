@@ -61,7 +61,9 @@ function serializeCookie(name, value, options) {
 }
 
 function setCorsHeaders(req, res) {
-  const origin = (process.env.CORS_ORIGIN || req.headers.origin || '').trim();
+  const isProduction = process.env.NODE_ENV === 'production';
+  const allowedOrigin = (process.env.CORS_ORIGIN || '').trim();
+  const origin = isProduction ? allowedOrigin : (allowedOrigin || (req.headers.origin || '').trim());
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
