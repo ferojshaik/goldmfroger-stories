@@ -1,6 +1,6 @@
-const { verifySignedCookie, setCorsHeaders } = require('../lib/session');
+import { verifySignedCookie, setCorsHeaders } from '../lib/session.js';
 
-module.exports = (req, res) => {
+export default function handler(req, res) {
   if (req.method === 'OPTIONS') {
     setCorsHeaders(req, res);
     res.status(204).end();
@@ -17,4 +17,4 @@ module.exports = (req, res) => {
   const cookieHeader = req.headers.cookie;
   const valid = verifySignedCookie(cookieHeader);
   res.status(200).json({ admin: valid });
-};
+}

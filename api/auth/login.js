@@ -1,9 +1,9 @@
-const {
+import {
   createSignedPayload,
   getSessionCookieOptions,
   serializeCookie,
   setCorsHeaders,
-} = require('../lib/session');
+} from '../lib/session.js';
 
 function getBody(req) {
   return new Promise((resolve) => {
@@ -20,7 +20,7 @@ function getBody(req) {
   });
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const sendJson = (status, obj) => {
     res.setHeader('Content-Type', 'application/json');
     res.status(status).json(obj);
@@ -72,4 +72,4 @@ module.exports = async (req, res) => {
       error: 'Server error. Check Vercel Function logs and that ADMIN_PASSWORD and (optionally) SESSION_SECRET are set.',
     });
   }
-};
+}

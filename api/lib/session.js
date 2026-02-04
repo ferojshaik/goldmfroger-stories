@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const COOKIE_NAME = 'session';
@@ -70,7 +70,7 @@ function setCorsHeaders(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-module.exports = {
+export {
   COOKIE_NAME,
   createSignedPayload,
   verifySignedCookie,

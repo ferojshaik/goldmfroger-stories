@@ -1,6 +1,6 @@
-const { setCorsHeaders } = require('../lib/session');
+import { setCorsHeaders } from '../lib/session.js';
 
-module.exports = (req, res) => {
+export default function handler(req, res) {
   if (req.method === 'OPTIONS') {
     setCorsHeaders(req, res);
     res.status(204).end();
@@ -20,4 +20,4 @@ module.exports = (req, res) => {
     (isProduction ? '; Secure' : '');
   res.setHeader('Set-Cookie', [clearCookie]);
   res.status(200).json({ ok: true });
-};
+}
