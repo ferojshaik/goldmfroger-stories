@@ -27,18 +27,18 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onNavigate, onLoginSuccess }) =
       try {
         data = await res.json();
       } catch {
-        // Response wasn't JSON (e.g. HTML error page)
+        // Response wasn't JSON (e.g. HTML error page or function crash)
         if (res.status === 502 || res.status === 503 || res.status === 504) {
-          setError('Auth server not reachable. In a separate terminal run: npm run server');
+          setError('Auth server not reachable. Locally: run npm run server. On Vercel: check deployment and env vars.');
         } else {
-          setError(`Login failed (${res.status}). Run the auth server: npm run server`);
+          setError(`Login failed (${res.status}). On Vercel: set ADMIN_PASSWORD in Project → Settings → Environment Variables and redeploy.`);
         }
         setLoading(false);
         return;
       }
       const msg = data.error ?? (typeof data.message === 'object' && data.message?.error) ?? '';
       if (!res.ok) {
-        setError(msg || `Login failed (${res.status}). Check .env has ADMIN_PASSWORD in project root and restart server.`);
+        setError(msg || `Login failed (${res.status}).`);
         setLoading(false);
         return;
       }
