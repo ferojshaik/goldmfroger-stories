@@ -85,7 +85,7 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-16 mt-16">
         <article className="lg:col-span-8">
           {embedUrl ? (
-            <div className={`mb-16 rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl ${isShorts ? 'max-w-sm mx-auto aspect-[9/16] w-full' : 'aspect-video'}`}>
+            <div className={`mb-16 rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl ${isShorts ? 'max-w-sm mx-auto aspect-[9/16] w-full min-h-[300px]' : 'aspect-video'}`}>
               <iframe 
                 width="100%" 
                 height="100%" 
@@ -94,7 +94,6 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
                 frameBorder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                 referrerPolicy="strict-origin-when-cross-origin"
-                sandbox="allow-forms allow-scripts allow-pointer-lock allow-same-origin allow-top-navigation allow-presentation"
                 allowFullScreen
               />
             </div>
