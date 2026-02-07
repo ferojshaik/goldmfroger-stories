@@ -16,20 +16,21 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
   const story = stories.find(s => s.slug === slug);
   const relatedStories = stories.filter(s => s.slug !== slug).slice(0, 3);
 
-  // Supports watch, embed, Shorts (youtube.com/shorts/ID), youtu.be/ID
-  const getYoutubeEmbedUrl = (url?: string) => {
+  // Extract 11-char video ID from any YouTube URL (watch, Shorts, youtu.be, embed)
+  const getYoutubeVideoId = (url?: string): string | null => {
     if (!url) return null;
-    const trimmed = url.trim();
-    // Extract 11-char video ID from: watch?v=ID, youtu.be/ID, youtube.com/shorts/ID, embed/ID, etc.
     const regExp = /(?:youtu\.be\/|(?:youtube\.com\/)(?:watch\?v=|embed\/|v\/|shorts\/)|&v=)([a-zA-Z0-9_-]{11})/;
-    const match = trimmed.match(regExp);
-    const videoId = match ? match[1] : null;
-    if (!videoId) return null;
-    return `https://www.youtube.com/embed/${videoId}?rel=0`;
+    const match = url.trim().match(regExp);
+    return match ? match[1] : null;
   };
 
   const isYoutubeShorts = (url?: string) =>
     !!url && /youtube\.com\/shorts\//i.test(url.trim());
+
+  const videoId = getYoutubeVideoId(story?.youtubeUrl);
+  const embedUrl = videoId && !isYoutubeShorts(story?.youtubeUrl)
+    ? `https://www.youtube.com/embed/${videoId}?rel=0`
+    : null;
 
   const handleDelete = () => {
     if (confirm("Permanently delete this story? This action cannot be reversed.")) {
@@ -43,7 +44,6 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
     </div>
   );
 
-  const embedUrl = getYoutubeEmbedUrl(story.youtubeUrl);
   const isShorts = isYoutubeShorts(story.youtubeUrl);
 
   return (
@@ -85,30 +85,56 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-16 mt-16">
         <article className="lg:col-span-8">
           {embedUrl ? (
-            <div className={`mb-16 rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl ${isShorts ? 'max-w-sm mx-auto aspect-[9/16] w-full min-h-[300px]' : 'aspect-video'}`}>
+            <div className="mb-16 aspect-video rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
               <iframe 
                 width="100%" 
                 height="100%" 
                 src={embedUrl} 
-                title={isShorts ? 'YouTube Shorts player' : 'YouTube video player'} 
+                title="YouTube video player" 
                 frameBorder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
               />
             </div>
-          ) : story.youtubeUrl && (
+          ) : isShorts && story.youtubeUrl && videoId ? (
+            <a
+              href={story.youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-16 block max-w-sm mx-auto w-full rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl group hover:border-amber-400/50 transition-colors"
+            >
+              <div className="aspect-[9/16] relative">
+                <img
+                  src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                  alt={story.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`; }}
+                />
+                <div className="absolute inset-0 bg-zinc-950/40 group-hover:bg-zinc-950/20 transition-colors flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-rose-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Youtube size={40} className="text-white" />
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 text-center">
+                <span className="text-amber-400 font-black uppercase tracking-widest text-sm">YouTube Short</span>
+                <p className="text-white font-bold mt-2">Watch on YouTube</p>
+              </div>
+            </a>
+          ) : story.youtubeUrl ? (
             <div className="mb-16 p-8 bg-zinc-900 border-2 border-dashed border-zinc-800 rounded-3xl text-center">
               <p className="text-zinc-500 font-bold mb-4 uppercase tracking-widest">Video Embed Unavailable</p>
               <a 
                 href={story.youtubeUrl} 
                 target="_blank" 
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-rose-600 text-white px-6 py-3 rounded-xl font-black uppercase text-sm"
               >
                 Watch Directly on YouTube <Youtube size={18} />
               </a>
             </div>
-          )}
+          ) : null}
 
           <div className="prose prose-invert prose-zinc max-w-none">
             {story.body ? (
