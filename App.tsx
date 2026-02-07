@@ -109,6 +109,11 @@ const App: React.FC = () => {
     setStories(prev => [story, ...prev]);
   };
 
+  const updateStory = (slug: string, updatedStory: Story) => {
+    const decodedSlug = decodeURIComponent(slug);
+    setStories(prev => prev.map(s => s.slug === decodedSlug ? { ...updatedStory, slug: decodedSlug } : s));
+  };
+
   const deleteStory = (slug: string) => {
     const decodedSlug = decodeURIComponent(slug);
     setStories(prev => prev.filter(s => s.slug !== decodedSlug));
@@ -129,6 +134,7 @@ const App: React.FC = () => {
         <Creator
           onNavigate={navigate}
           onAddStory={addStory}
+          onUpdateStory={updateStory}
           onDeleteStory={deleteStory}
           customStories={stories}
           brand={brand}

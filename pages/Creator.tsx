@@ -1,18 +1,19 @@
 
-import React, { useState, useRef } from 'react';
-import { Trash2, Settings, Youtube, CheckCircle2, PlayCircle, PenTool, Image as ImageIcon, Upload, FileText } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Trash2, Settings, Youtube, CheckCircle2, PlayCircle, PenTool, Image as ImageIcon, Upload, FileText, Pencil } from 'lucide-react';
 import { Story } from '../types';
 
 interface CreatorProps {
   onNavigate: (route: string) => void;
   onAddStory: (story: Story) => void;
+  onUpdateStory?: (slug: string, story: Story) => void;
   onDeleteStory: (slug: string) => void;
   customStories: Story[];
   brand: { name: string; youtubeHandle: string };
   onUpdateBrand: (name: string, handle: string) => void;
 }
 
-const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory, customStories, brand, onUpdateBrand }) => {
+const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onUpdateStory, onDeleteStory, customStories, brand, onUpdateBrand }) => {
   // Manual Story State
   const [formData, setFormData] = useState({
     title: '',
@@ -26,6 +27,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
 
   const [showBrandSettings, setShowBrandSettings] = useState(false);
   const [view, setView] = useState<'create' | 'manage'>('create');
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [tempBrandName, setTempBrandName] = useState(brand.name);
   const [tempBrandHandle, setTempBrandHandle] = useState(brand.youtubeHandle);
   const [imageError, setImageError] = useState('');
@@ -45,18 +47,27 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
     }
     setImageError('');
 
+    const slug = editingSlug || formData.slug || formData.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Date.now();
     const newStory: Story = {
       ...formData,
-      slug: formData.slug || formData.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Date.now(),
-      date: new Date().toISOString().split('T')[0],
+      slug,
+      date: editingSlug ? (customStories.find(s => s.slug === editingSlug)?.date ?? new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
       readingTime: `${Math.ceil(formData.body.length / 800) + 1} min`,
       image: formData.image || `https://picsum.photos/seed/${Date.now()}/1200/600`
     };
 
     try {
-      onAddStory(newStory);
-      alert("Story Published! It's now live in your local feed.");
-      onNavigate('/stories');
+      if (editingSlug && onUpdateStory) {
+        onUpdateStory(editingSlug, newStory);
+        alert("Story updated!");
+        setEditingSlug(null);
+        clearForm();
+        setView('manage');
+      } else {
+        onAddStory(newStory);
+        alert("Story Published! It's now live in your local feed.");
+        onNavigate('/stories');
+      }
     } catch (err) {
       console.error(err);
       const msg = err instanceof Error ? err.message : String(err);
@@ -116,6 +127,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
   };
 
   const clearForm = () => {
+    if (!formData.title && !formData.body && !editingSlug) return;
     if (confirm("Are you sure you want to clear your current draft?")) {
       setFormData({
         title: '',
@@ -126,8 +138,34 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
         image: '',
         youtubeUrl: ''
       });
+      setEditingSlug(null);
+      setImageError('');
     }
   };
+
+  const startEditing = (story: Story) => {
+    setFormData({
+      title: story.title ?? '',
+      description: story.description ?? '',
+      category: story.category ?? '',
+      body: story.body ?? '',
+      slug: story.slug ?? '',
+      image: story.image ?? '',
+      youtubeUrl: story.youtubeUrl ?? ''
+    });
+    setEditingSlug(story.slug ?? null);
+    setImageError('');
+    setView('create');
+  };
+
+  useEffect(() => {
+    const editSlug = sessionStorage.getItem('creator_edit_slug');
+    if (editSlug && customStories.length > 0) {
+      sessionStorage.removeItem('creator_edit_slug');
+      const story = customStories.find(s => s.slug === editSlug || decodeURIComponent(s.slug) === editSlug);
+      if (story) startEditing(story);
+    }
+  }, [customStories]);
 
   const handleDelete = (e: React.MouseEvent, slug: string) => {
     e.stopPropagation(); // Prevent navigation if parent has click handler
@@ -298,12 +336,34 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
               </div>
 
               <div className="pt-4 flex gap-4">
-                <button 
-                  onClick={handlePublish}
-                  className="flex-grow flex items-center justify-center gap-3 bg-rose-600 hover:bg-rose-700 text-white px-6 py-5 rounded-2xl font-black uppercase text-lg transition-all rose-glow transform hover:scale-[1.02]"
-                >
-                  <CheckCircle2 size={24} /> Publish Story
-                </button>
+                {editingSlug ? (
+                  <>
+                    <button 
+                      onClick={handlePublish}
+                      className="flex-grow flex items-center justify-center gap-3 bg-amber-400 text-zinc-950 hover:bg-amber-300 px-6 py-5 rounded-2xl font-black uppercase text-lg transition-all transform hover:scale-[1.02]"
+                    >
+                      <CheckCircle2 size={24} /> Update Story
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setEditingSlug(null);
+                        setFormData({ title: '', description: '', category: '', body: '', slug: '', image: '', youtubeUrl: '' });
+                        setImageError('');
+                      }}
+                      className="px-6 py-5 rounded-2xl font-black uppercase text-sm border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={handlePublish}
+                    className="flex-grow flex items-center justify-center gap-3 bg-rose-600 hover:bg-rose-700 text-white px-6 py-5 rounded-2xl font-black uppercase text-lg transition-all rose-glow transform hover:scale-[1.02]"
+                  >
+                    <CheckCircle2 size={24} /> Publish Story
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -372,19 +432,31 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
                   <div className="aspect-video relative overflow-hidden">
                     <img src={story.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={story.title} />
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent opacity-60" />
-                    <button 
-                      onClick={(e) => handleDelete(e, story.slug)}
-                      className="absolute top-4 right-4 bg-rose-600 text-white p-3 rounded-xl shadow-lg transform hover:scale-110 active:scale-95 transition-all"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    <div className="absolute top-4 right-4 flex gap-2">
+                      <button 
+                        onClick={() => startEditing(story)}
+                        className="bg-amber-400 text-zinc-950 p-3 rounded-xl shadow-lg transform hover:scale-110 active:scale-95 transition-all"
+                        title="Edit"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button 
+                        onClick={(e) => handleDelete(e, story.slug)}
+                        className="bg-rose-600 text-white p-3 rounded-xl shadow-lg transform hover:scale-110 active:scale-95 transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
                   <div className="p-6 flex-grow flex flex-col">
                     <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">{story.date}</span>
                     <h3 className="text-lg font-black text-white uppercase italic leading-tight mb-4 group-hover:text-amber-400 transition-colors line-clamp-2">{story.title}</h3>
                     <div className="mt-auto pt-4 border-t border-zinc-800 flex justify-between items-center">
                       <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{story.category}</span>
-                      <button onClick={() => onNavigate(`/stories/${story.slug}`)} className="text-xs font-bold text-white uppercase tracking-tighter hover:underline">View Post</button>
+                      <div className="flex gap-3">
+                        <button onClick={() => startEditing(story)} className="text-xs font-bold text-amber-400 uppercase tracking-tighter hover:underline">Edit</button>
+                        <button onClick={() => onNavigate(`/stories/${encodeURIComponent(story.slug)}`)} className="text-xs font-bold text-white uppercase tracking-tighter hover:underline">View Post</button>
                     </div>
                   </div>
                 </div>

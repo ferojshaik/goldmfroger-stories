@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Clock, ArrowLeft, Twitter, Facebook, Link as LinkIcon, Youtube, Trash2 } from 'lucide-react';
+import { Calendar, Clock, ArrowLeft, Twitter, Facebook, Link as LinkIcon, Youtube, Trash2, Pencil } from 'lucide-react';
 import { Story } from '../types';
 
 interface StoryDetailProps {
@@ -237,8 +237,14 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
           </div>
 
           {isAdmin && (
-            <div className="pt-10 border-t border-zinc-800/50">
-              <h3 className="text-xs font-black text-zinc-600 uppercase mb-4 tracking-[0.2em]">Danger Zone</h3>
+            <div className="pt-10 border-t border-zinc-800/50 space-y-3">
+              <h3 className="text-xs font-black text-zinc-600 uppercase mb-4 tracking-[0.2em]">Admin</h3>
+              <button 
+                onClick={() => { sessionStorage.setItem('creator_edit_slug', slug); onNavigate('/create'); }}
+                className="w-full flex items-center justify-center gap-2 border border-zinc-800 hover:border-amber-400/50 hover:bg-amber-400/10 text-zinc-400 hover:text-amber-400 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all"
+              >
+                <Pencil size={16} /> Edit This Story
+              </button>
               <button 
                 onClick={handleDelete}
                 className="w-full flex items-center justify-center gap-2 border border-zinc-800 hover:border-rose-900 hover:bg-rose-900/10 text-zinc-500 hover:text-rose-500 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all"
