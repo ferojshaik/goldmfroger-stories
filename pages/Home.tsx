@@ -12,8 +12,9 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate, brand, stories, isAdmin = false }) => {
-  const featuredStory = stories[0];
-  const latestStories = stories.slice(1, 4);
+  const safeStories = Array.isArray(stories) ? stories : [];
+  const featuredStory = safeStories[0];
+  const latestStories = safeStories.slice(1, 4).filter(s => s && typeof s.slug === 'string');
 
   return (
     <div className="animate-in fade-in duration-700">
@@ -58,7 +59,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, brand, stories, isAdmin = false
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-rose-600/10 blur-[150px] -z-10 rounded-full"></div>
       </section>
 
-      {stories.length > 0 ? (
+      {safeStories.length > 0 ? (
         <>
           <section className="py-20 bg-zinc-950 px-4">
             <div className="max-w-7xl mx-auto">
@@ -70,7 +71,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, brand, stories, isAdmin = false
                   <div className="h-1.5 w-32 bg-amber-400 rounded-full"></div>
                 </div>
               </div>
-              {featuredStory && <StoryCard story={featuredStory} onClick={(slug) => onNavigate(`/stories/${slug}`)} isFeatured />}
+              {featuredStory && <StoryCard story={featuredStory} onClick={(slug) => onNavigate(`/stories/${encodeURIComponent(slug)}`)} isFeatured />}
             </div>
           </section>
 
@@ -94,7 +95,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, brand, stories, isAdmin = false
                     </button>
                   </div>
                   {latestStories.map(story => (
-                    <StoryCard key={story.slug} story={story} onClick={(slug) => onNavigate(`/stories/${slug}`)} />
+                    <StoryCard key={story.slug} story={story} onClick={(slug) => onNavigate(`/stories/${encodeURIComponent(slug)}`)} />
                   ))}
                 </div>
               </div>

@@ -14,13 +14,19 @@ interface StoriesListProps {
 const StoriesList: React.FC<StoriesListProps> = ({ onNavigate, stories, onDeleteStory, isAdmin = false }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isManageMode, setIsManageMode] = useState(false);
-  
-  const filteredStories = stories.filter(story => {
-    const q = searchQuery.toLowerCase();
-    const t = (story?.title ?? '').toLowerCase();
-    const d = (story?.description ?? '').toLowerCase();
-    const c = (story?.category ?? '').toLowerCase();
-    return t.includes(q) || d.includes(q) || c.includes(q);
+
+  const safeStories = Array.isArray(stories) ? stories : [];
+  const filteredStories = safeStories.filter(story => {
+    if (!story || typeof story !== 'object') return false;
+    try {
+      const q = String(searchQuery ?? '').toLowerCase();
+      const t = String(story.title ?? '').toLowerCase();
+      const d = String(story.description ?? '').toLowerCase();
+      const c = String(story.category ?? '').toLowerCase();
+      return t.includes(q) || d.includes(q) || c.includes(q);
+    } catch {
+      return true;
+    }
   });
 
   const handleDelete = (e: React.MouseEvent, slug: string) => {
@@ -79,14 +85,17 @@ const StoriesList: React.FC<StoriesListProps> = ({ onNavigate, stories, onDelete
         <div className="max-w-7xl mx-auto">
           {filteredStories.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredStories.map(story => (
-                <StoryCard 
-                  key={story.slug} 
-                  story={story} 
-                  onClick={(slug) => onNavigate(`/stories/${slug}`)} 
-                  onDelete={isAdmin && isManageMode ? handleDelete : undefined}
-                />
-              ))}
+              {filteredStories.map(story => {
+                if (!story || typeof story.slug !== 'string' || !story.slug) return null;
+                return (
+                  <StoryCard 
+                    key={story.slug} 
+                    story={story} 
+                    onClick={(slug) => onNavigate(`/stories/${encodeURIComponent(slug)}`)} 
+                    onDelete={isAdmin && isManageMode ? handleDelete : undefined}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-32 bg-zinc-900/30 rounded-[3rem] border-2 border-dashed border-zinc-800">
