@@ -28,13 +28,22 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
   const [view, setView] = useState<'create' | 'manage'>('create');
   const [tempBrandName, setTempBrandName] = useState(brand.name);
   const [tempBrandHandle, setTempBrandHandle] = useState(brand.youtubeHandle);
+  const [imageError, setImageError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isLocalPath = (value: string) => /^[A-Za-z]:\\|^\/[^/]|^file:\/\//i.test((value || '').trim());
 
   const handlePublish = () => {
     if (!formData.title || !formData.body) {
       alert("Please provide at least a Title and a Story Body!");
       return;
     }
+    if (formData.image && isLocalPath(formData.image)) {
+      setImageError('That\'s a file path, not a web URL. Use "Choose Local File" above to upload the image.');
+      alert("Cover image: use \"Choose Local File\" to upload your image, or paste a web URL (e.g. https://...). File paths like C:\\... don't work in the browser.");
+      return;
+    }
+    setImageError('');
 
     const newStory: Story = {
       ...formData,
@@ -44,9 +53,19 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
       image: formData.image || `https://picsum.photos/seed/${Date.now()}/1200/600`
     };
 
-    onAddStory(newStory);
-    alert("Story Published! It's now live in your local feed.");
-    onNavigate('/stories');
+    try {
+      onAddStory(newStory);
+      alert("Story Published! It's now live in your local feed.");
+      onNavigate('/stories');
+    } catch (err) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/quota|size|storage/i.test(msg)) {
+        alert("Story is too large to save (cover image may be too big). Try a smaller image or use a web image URL instead.");
+      } else {
+        alert("Something went wrong saving the story. Try a smaller cover image or clear the draft and try again.");
+      }
+    }
   };
 
   const handleSaveBrand = (e: React.FormEvent) => {
@@ -56,18 +75,44 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
   };
 
   const updateField = (field: string, value: string) => {
+    if (field === 'image') setImageError('');
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateField('image', reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    setImageError('');
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      let dataUrl = reader.result as string;
+      if (dataUrl.length > 1_200_000) {
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 1200;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, w, h);
+            const resized = canvas.toDataURL('image/jpeg', 0.85);
+            updateField('image', resized);
+          } else {
+            updateField('image', dataUrl);
+          }
+        };
+        img.onerror = () => updateField('image', dataUrl);
+        img.src = dataUrl;
+      } else {
+        updateField('image', dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const clearForm = () => {
@@ -202,12 +247,18 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
                   <div className="relative h-[84px]">
                     <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
                     <input 
-                      value={formData.image}
-                      onChange={(e) => updateField('image', e.target.value)}
-                      className="w-full h-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 pl-10 pr-3 text-white text-xs font-mono"
+                      value={typeof formData.image === 'string' && formData.image.startsWith('data:') ? '(uploaded image)' : (formData.image || '')}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === '(uploaded image)') return;
+                        updateField('image', v);
+                      }}
+                      className={`w-full h-full bg-zinc-950 border rounded-xl py-3 pl-10 pr-3 text-white text-xs font-mono ${imageError ? 'border-rose-500' : 'border-zinc-800'}`}
                       placeholder="https://..."
                     />
                   </div>
+                  {imageError && <p className="text-rose-500 text-xs font-medium">{imageError}</p>}
+                  <p className="text-zinc-500 text-[10px]">Paste a web URL only. For files on your PC, use &quot;Choose Local File&quot; above.</p>
                 </div>
               </div>
 
