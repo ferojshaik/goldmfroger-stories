@@ -39,7 +39,22 @@ const App: React.FC = () => {
   const [stories, setStories] = useState<Story[]>(() => {
     try {
       const saved = localStorage.getItem('custom_stories');
-      return saved ? JSON.parse(saved) : [];
+      const raw = saved ? JSON.parse(saved) : [];
+      if (!Array.isArray(raw)) return [];
+      return raw
+        .filter((s: unknown): s is Story => s != null && typeof s === 'object' && typeof (s as Story).slug === 'string' && (s as Story).slug.length > 0)
+        .map((s: Story) => ({
+          title: typeof s.title === 'string' ? s.title : 'Untitled',
+          slug: String(s.slug),
+          date: typeof s.date === 'string' ? s.date : new Date().toISOString().slice(0, 10),
+          description: typeof s.description === 'string' ? s.description : '',
+          body: typeof s.body === 'string' ? s.body : '',
+          image: typeof s.image === 'string' && s.image ? s.image : 'https://placehold.co/1200x630/18181b/fbbf24?text=Story',
+          readingTime: typeof s.readingTime === 'string' ? s.readingTime : '5 min',
+          category: typeof s.category === 'string' ? s.category : undefined,
+          youtubeUrl: typeof s.youtubeUrl === 'string' ? s.youtubeUrl : undefined,
+          images: Array.isArray(s.images) ? s.images : undefined,
+        }));
     } catch (e) {
       console.error("Storage Error:", e);
       return [];

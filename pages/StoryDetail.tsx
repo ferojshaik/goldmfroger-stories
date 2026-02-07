@@ -17,15 +17,27 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
   const relatedStories = stories.filter(s => s.slug !== slug).slice(0, 3);
 
   // Extract 11-char video ID from any YouTube URL (watch, Shorts, youtu.be, embed)
-  const getYoutubeVideoId = (url?: string): string | null => {
-    if (!url) return null;
-    const regExp = /(?:youtu\.be\/|(?:youtube\.com\/)(?:watch\?v=|embed\/|v\/|shorts\/)|&v=)([a-zA-Z0-9_-]{11})/;
-    const match = url.trim().match(regExp);
-    return match ? match[1] : null;
+  const getYoutubeVideoId = (url?: string | null): string | null => {
+    try {
+      if (url == null || typeof url !== 'string') return null;
+      const trimmed = String(url).trim();
+      if (!trimmed) return null;
+      const regExp = /(?:youtu\.be\/|(?:youtube\.com\/)(?:watch\?v=|embed\/|v\/|shorts\/)|&v=)([a-zA-Z0-9_-]{11})/;
+      const match = trimmed.match(regExp);
+      return match ? match[1] : null;
+    } catch {
+      return null;
+    }
   };
 
-  const isYoutubeShorts = (url?: string) =>
-    !!url && /youtube\.com\/shorts\//i.test(url.trim());
+  const isYoutubeShorts = (url?: string | null): boolean => {
+    try {
+      if (url == null || typeof url !== 'string') return false;
+      return /youtube\.com\/shorts\//i.test(String(url).trim());
+    } catch {
+      return false;
+    }
+  };
 
   const videoId = getYoutubeVideoId(story?.youtubeUrl);
   const embedUrl = videoId && !isYoutubeShorts(story?.youtubeUrl)
@@ -50,9 +62,10 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
     <div className="animate-in fade-in duration-500 pb-32">
       <header className="relative h-[60vh] md:h-[70vh] w-full flex items-end pb-20 overflow-hidden">
         <img 
-          src={story.image} 
-          alt={story.title}
+          src={story.image || 'https://placehold.co/1200x630/18181b/fbbf24?text=Story'}
+          alt={story.title || 'Story'}
           className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/1200x630/18181b/fbbf24?text=Story'; }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
         
@@ -72,7 +85,7 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
           <div className="flex flex-wrap items-center gap-6 md:gap-10 text-zinc-300 font-bold uppercase tracking-wider text-sm">
              <div className="flex items-center gap-2">
                 <Calendar size={18} className="text-amber-400" />
-                {new Date(story.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                {story.date ? new Date(story.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'}
              </div>
              <div className="flex items-center gap-2">
                 <Clock size={18} className="text-amber-400" />

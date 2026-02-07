@@ -15,11 +15,13 @@ const StoriesList: React.FC<StoriesListProps> = ({ onNavigate, stories, onDelete
   const [searchQuery, setSearchQuery] = useState('');
   const [isManageMode, setIsManageMode] = useState(false);
   
-  const filteredStories = stories.filter(story => 
-    story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    story.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    story.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStories = stories.filter(story => {
+    const q = searchQuery.toLowerCase();
+    const t = (story?.title ?? '').toLowerCase();
+    const d = (story?.description ?? '').toLowerCase();
+    const c = (story?.category ?? '').toLowerCase();
+    return t.includes(q) || d.includes(q) || c.includes(q);
+  });
 
   const handleDelete = (e: React.MouseEvent, slug: string) => {
     e.stopPropagation();

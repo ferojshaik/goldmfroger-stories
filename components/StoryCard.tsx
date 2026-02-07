@@ -51,14 +51,14 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, onDelete, isFeatu
           <p className="text-zinc-300 text-lg md:text-xl max-w-2xl mb-8 line-clamp-2 md:line-clamp-none">
             {story.description}
           </p>
-          <div className="flex flex-wrap items-center gap-8 text-zinc-400 font-bold uppercase tracking-widest text-sm mb-10">
+            <div className="flex flex-wrap items-center gap-8 text-zinc-400 font-bold uppercase tracking-widest text-sm mb-10">
             <div className="flex items-center gap-2">
               <Calendar size={20} className="text-amber-400" />
-              {new Date(story.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              {story.date ? new Date(story.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'}
             </div>
             <div className="flex items-center gap-2">
               <Clock size={20} className="text-amber-400" />
-              {story.readingTime}
+              {story.readingTime ?? '5 min'}
             </div>
           </div>
           <button className="flex items-center gap-3 bg-white text-zinc-950 hover:bg-amber-400 transition-all px-8 py-4 rounded-full font-black uppercase tracking-wider text-lg w-fit group/btn">
@@ -107,7 +107,7 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, onDelete, isFeatu
         </p>
         <div className="mt-auto pt-6 border-t border-zinc-800 flex items-center justify-between">
           <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-            {new Date(story.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {story.date ? new Date(story.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
           </span>
           <span className="text-sm font-black text-white group-hover:text-amber-400 flex items-center gap-1 uppercase italic tracking-tighter">
             Read Story <ChevronRight size={16} />
