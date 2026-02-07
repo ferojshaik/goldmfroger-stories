@@ -16,18 +16,20 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
   const story = stories.find(s => s.slug === slug);
   const relatedStories = stories.filter(s => s.slug !== slug).slice(0, 3);
 
+  // Supports watch, embed, Shorts (youtube.com/shorts/ID), youtu.be/ID
   const getYoutubeEmbedUrl = (url?: string) => {
     if (!url) return null;
-    
-    // Robust Regex to extract 11-character Video ID from almost any YouTube URL
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
-    const match = url.match(regExp);
-    const videoId = (match && match[2].length === 11) ? match[2] : null;
-
+    const trimmed = url.trim();
+    // Extract 11-char video ID from: watch?v=ID, youtu.be/ID, youtube.com/shorts/ID, embed/ID, etc.
+    const regExp = /(?:youtu\.be\/|(?:youtube\.com\/)(?:watch\?v=|embed\/|v\/|shorts\/)|&v=)([a-zA-Z0-9_-]{11})/;
+    const match = trimmed.match(regExp);
+    const videoId = match ? match[1] : null;
     if (!videoId) return null;
-    
     return `https://www.youtube.com/embed/${videoId}?rel=0`;
   };
+
+  const isYoutubeShorts = (url?: string) =>
+    !!url && /youtube\.com\/shorts\//i.test(url.trim());
 
   const handleDelete = () => {
     if (confirm("Permanently delete this story? This action cannot be reversed.")) {
@@ -42,6 +44,7 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
   );
 
   const embedUrl = getYoutubeEmbedUrl(story.youtubeUrl);
+  const isShorts = isYoutubeShorts(story.youtubeUrl);
 
   return (
     <div className="animate-in fade-in duration-500 pb-32">
@@ -82,12 +85,12 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-16 mt-16">
         <article className="lg:col-span-8">
           {embedUrl ? (
-            <div className="mb-16 aspect-video rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
+            <div className={`mb-16 rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl ${isShorts ? 'max-w-sm mx-auto aspect-[9/16] w-full' : 'aspect-video'}`}>
               <iframe 
                 width="100%" 
                 height="100%" 
                 src={embedUrl} 
-                title="YouTube video player" 
+                title={isShorts ? 'YouTube Shorts player' : 'YouTube video player'} 
                 frameBorder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                 referrerPolicy="strict-origin-when-cross-origin"

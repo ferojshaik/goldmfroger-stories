@@ -212,14 +212,14 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onDeleteStory
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black text-zinc-500 uppercase tracking-widest">YouTube Video Link (Optional)</label>
+                <label className="text-xs font-black text-zinc-500 uppercase tracking-widest">YouTube Video or Shorts Link (Optional)</label>
                 <div className="relative">
                   <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-500" size={16} />
                   <input 
                     value={formData.youtubeUrl}
                     onChange={(e) => updateField('youtubeUrl', e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 pl-10 pr-3 text-white text-xs font-mono"
-                    placeholder="https://youtube.com/watch?v=..."
+                    placeholder="youtube.com/watch?v=... or youtube.com/shorts/..."
                   />
                 </div>
               </div>
