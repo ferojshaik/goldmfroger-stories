@@ -117,22 +117,29 @@ const StoryDetail: React.FC<StoryDetailProps> = ({ slug, onNavigate, stories, br
               rel="noopener noreferrer"
               className="mb-16 block max-w-sm mx-auto w-full rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl group hover:border-amber-400/50 transition-colors"
             >
-              <div className="aspect-[9/16] relative">
+              <div className="aspect-[9/16] relative bg-gradient-to-b from-zinc-800 to-zinc-900 flex items-center justify-center">
                 <img
-                  src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                  src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
                   alt={story.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`; }}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={(e) => {
+                    const el = e.target as HTMLImageElement;
+                    if (el.src.includes('hqdefault')) {
+                      el.style.display = 'none';
+                    } else {
+                      el.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                    }
+                  }}
                 />
-                <div className="absolute inset-0 bg-zinc-950/40 group-hover:bg-zinc-950/20 transition-colors flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-full bg-rose-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Youtube size={40} className="text-white" />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-zinc-950/40 flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-rose-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
+                    <Youtube size={48} className="text-white" />
                   </div>
                 </div>
-              </div>
-              <div className="p-6 text-center">
-                <span className="text-amber-400 font-black uppercase tracking-widest text-sm">YouTube Short</span>
-                <p className="text-white font-bold mt-2">Watch on YouTube</p>
+                <div className="absolute bottom-4 left-0 right-0 text-center">
+                  <span className="text-amber-400 font-black uppercase tracking-widest text-xs">YouTube Short</span>
+                  <p className="text-white font-bold mt-1 text-sm">Tap to watch on YouTube</p>
+                </div>
               </div>
             </a>
           ) : story.youtubeUrl ? (
