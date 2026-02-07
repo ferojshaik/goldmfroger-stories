@@ -453,10 +453,11 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onUpdateStory
                     <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">{story.date}</span>
                     <h3 className="text-lg font-black text-white uppercase italic leading-tight mb-4 group-hover:text-amber-400 transition-colors line-clamp-2">{story.title}</h3>
                     <div className="mt-auto pt-4 border-t border-zinc-800 flex justify-between items-center">
-                      <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{story.category}</span>
+                      <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{story.category ?? ''}</span>
                       <div className="flex gap-3">
                         <button onClick={() => startEditing(story)} className="text-xs font-bold text-amber-400 uppercase tracking-tighter hover:underline">Edit</button>
                         <button onClick={() => onNavigate(`/stories/${encodeURIComponent(story.slug)}`)} className="text-xs font-bold text-white uppercase tracking-tighter hover:underline">View Post</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -468,7 +469,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate, onAddStory, onUpdateStory
                 <FileText size={40} />
               </div>
               <h3 className="text-2xl font-black text-white uppercase mb-2">No Stories Yet</h3>
-              <p className="text-zinc-500 max-w-sm mx-auto">You haven't published any stories manually yet. Start by creating your first roast!</p>
+              <p className="text-zinc-500 max-w-sm mx-auto">You haven&apos;t published any stories manually yet. Start by creating your first roast!</p>
               <button 
                 onClick={() => setView('create')}
                 className="mt-8 bg-amber-400 text-zinc-950 px-8 py-3 rounded-xl font-black uppercase"
