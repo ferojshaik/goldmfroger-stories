@@ -10,11 +10,41 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Show workflow_run payload
+      - name: Build failure payload
+        id: build_payload
         run: |
-          echo "Workflow run ID: ${{ github.event.workflow_run.id }}"
-          echo "Workflow name: ${{ github.event.workflow_run.name }}"
-          echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
-          echo "Head SHA: ${{ github.event.workflow_run.head_sha }}"
-          echo "Head branch: ${{ github.event.workflow_run.head_branch }}"
-          echo "HTML URL: ${{ github.event.workflow_run.html_url }}"
+          cat <<'EOF' > payload.json
+          {
+            "repository": {
+              "owner": "${{ github.repository_owner }}",
+              "name": "${{ github.event.repository.name }}"
+            },
+            "workflow": {
+              "name": "${{ github.event.workflow_run.name }}",
+              "run_id": ${{ github.event.workflow_run.id }},
+              "run_html_url": "${{ github.event.workflow_run.html_url }}",
+              "run_logs_url": "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/logs",
+              "conclusion": "${{ github.event.workflow_run.conclusion }}"
+            },
+            "commit": {
+              "sha": "${{ github.event.workflow_run.head_sha }}",
+              "branch": "${{ github.event.workflow_run.head_branch }}"
+            },
+            "failure": {
+              "jobs": [
+                {
+                  "name": "unknown",
+                  "status": "failed",
+                  "failed_step": "unknown",
+                  "log_excerpt": "See logs at workflow.run_logs_url"
+                }
+              ]
+            },
+            "attempt": {
+              "auto_fix_number": 1
+            }
+          }
+          EOF
+
+          echo "=== Payload that will be sent to the agent ==="
+          cat payload.json
