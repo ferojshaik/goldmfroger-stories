@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - "**"
   pull_request:
-    branches: [ main ]
+    branches:
+      - "**"
 
 jobs:
   build:
@@ -17,9 +19,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        working-directory: ./goldmfroger-stories
         run: npm ci
 
       - name: Build
-        working-directory: ./goldmfroger-stories
         run: npm run build
